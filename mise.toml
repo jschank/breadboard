@@ -1,0 +1,13 @@
+[tools]
+elixir = "latest"
+erlang = "latest"
+
+[env]
+MIX_TARGET = "rpi0"
+NERVES_WIFI_SSID = "Wombat Festival"
+NERVES_WIFI_PSK = "orange-buffoon-2-prison"
+
+[tasks.test]
+description = "Run tests on the host"
+env = { MIX_TARGET = "host" }
+run = "mix nerves.info && mix test"
