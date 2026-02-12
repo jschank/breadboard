@@ -4,6 +4,7 @@ erlang = "latest"
 
 [env]
 MIX_TARGET = "rpi0"
+MIX_ENV = "dev"
 NERVES_WIFI_SSID = "Wombat Festival"
 NERVES_WIFI_PSK = "orange-buffoon-2-prison"
 
@@ -11,3 +12,18 @@ NERVES_WIFI_PSK = "orange-buffoon-2-prison"
 description = "Run tests on the host"
 env = { MIX_TARGET = "host" }
 run = "mix nerves.info && mix test"
+
+[tasks.host]
+description = "Run app on the host"
+env = { MIX_TARGET = "host" }
+run = "iex -S mix"
+
+
+[tasks.build]
+description = "Build the weather App"
+run = "mix firmware"
+
+[tasks.deploy]
+description = "Deploy to the rpi0 at weather.local"
+run = "mix upload breadboard.local"
+depends = ["build"]
