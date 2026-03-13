@@ -1,29 +1,85 @@
+[settings]
+env_shell_expand = true
+
+[env]
+NERVES_WIFI_SSID = 'Wombat Festival'
+NERVES_WIFI_PSK = 'orange-buffoon-2-prison'
+
 [tools]
 elixir = "latest"
 erlang = "latest"
+fwup = "latest"
 
-[env]
-MIX_TARGET = "rpi0"
-MIX_ENV = "dev"
-NERVES_WIFI_SSID = "Wombat Festival"
-NERVES_WIFI_PSK = "orange-buffoon-2-prison"
+[tasks.clean]
+description = "delete all artifacts"
+run = [
+  "rimraf _build",
+  "rimraf deps",
+  "rimraf mix.lock",
+  "rimraf .elixir_ls"
+]
 
-[tasks.test]
-description = "Run tests on the host"
-env = { MIX_TARGET = "host" }
-run = "mix nerves.info && mix test"
+[tasks.tree]
+description = "Show a tree of the project, without ignored folders"
+run = "tree --gitignore"
 
-[tasks.host]
-description = "Run app on the host"
-env = { MIX_TARGET = "host" }
-run = "iex -S mix"
+[tasks.deps]
+description = "Update dependencies"
+env = { MIX_TARGET = { required = true }, MIX_ENV = { required = true } }
+run = "mix deps.get"
 
+[tasks.deps-all]
+description = "Fetch Nerves dependencies for all targets"
+shell = "fish -c"
+run = """
+set targets rpi5 rpi4 rpi3a rpi3 rpi0
+for t in $targets
+    echo "--- Target: $t ---"
+    MIX_TARGET=$t mix deps.get
+end
+"""
+
+[tasks.clean-compile]
+env = { MIX_TARGET = { required = true }, MIX_ENV = { required = true } }
+run = [
+  "mix compile --force",
+]
+depends = ["clean", "deps"]
 
 [tasks.build]
-description = "Build the weather App"
+env = { MIX_TARGET = { required = true }, MIX_ENV = { required = true } }
+description = "Build firmware"
 run = "mix firmware"
+raw = true
+
+[tasks.upload]
+description = "upload firmware to device"
+env = { MIX_TARGET = { required = true }, MIX_ENV = { required = true } }
+run = "mix upload BB-$MIX_TARGET.local"
+raw = true
+
+[tasks.dev]
+description = "Run locally"
+run = "iex -S mix"
 
 [tasks.deploy]
-description = "Deploy to the rpi0 at weather.local"
-run = "mix upload breadboard.local"
 depends = ["build"]
+run = { task = "upload" }
+
+
+# NOTE: Provisioning ONLY happens on a firmware BURN
+[tasks.burn.env]
+MIX_TARGET = { required = true }
+MIX_ENV = { required = true }
+NERVES_SERIAL_NUMBER="BB-{{env.MIX_TARGET | upper}}"
+
+[tasks.burn]
+description = "Burn firmware to sd card"
+# Use a bash shell to ensure variable export works correctly
+shell = "bash -c"
+run = "sudo -E mix burn"
+
+
+# [tasks."host:test"]
+# description = "Run the project locally on your host"
+# run = "iex -S mix test"

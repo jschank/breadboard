@@ -10,7 +10,7 @@ defmodule Breadboard.MixProject do
     :rpi2,
     :rpi3,
     :rpi4,
-    :rpi5,
+    :rpi5
   ]
 
   def project do
@@ -21,8 +21,7 @@ defmodule Breadboard.MixProject do
       archives: [nerves_bootstrap: "~> 1.14"],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      releases: [{@app, release()}],
-      preferred_cli_target: [run: :host, test: :host]
+      releases: [{@app, release()}]
     ]
   end
 
@@ -49,8 +48,9 @@ defmodule Breadboard.MixProject do
 
       # Dependencies for all targets except :host
       {:nerves_pack, "~> 0.7.1", targets: @all_targets},
-
       {:circuits_gpio, "~> 2.1"},
+      {:circuits_uart, "~> 1.5.5"},
+      {:circuits_i2c, "~> 2.1.0"},
 
       # Dependencies for specific targets
       # NOTE: It's generally low risk and recommended to follow minor version
@@ -63,7 +63,13 @@ defmodule Breadboard.MixProject do
       {:nerves_system_rpi2, "~> 1.24", runtime: false, targets: :rpi2},
       {:nerves_system_rpi3, "~> 1.24", runtime: false, targets: :rpi3},
       {:nerves_system_rpi4, "~> 1.24", runtime: false, targets: :rpi4},
-      {:nerves_system_rpi5, "~> 0.2", runtime: false, targets: :rpi5},
+      {:nerves_system_rpi5, "~> 0.2", runtime: false, targets: :rpi5}
+    ]
+  end
+
+  def cli do
+    [
+      preferred_targets: [run: :host, test: :host]
     ]
   end
 

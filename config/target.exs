@@ -46,7 +46,7 @@ config :nerves_ssh,
 #
 # See https://github.com/nerves-networking/vintage_net for more information
 config :vintage_net,
-  regulatory_domain: "00",
+  regulatory_domain: "US",
   config: [
     {"usb0", %{type: VintageNetDirect}},
     {"eth0",
@@ -54,22 +54,26 @@ config :vintage_net,
        type: VintageNetEthernet,
        ipv4: %{method: :dhcp}
      }},
-    {"wlan0", %{
-      type: VintageNetWiFi,
-      vintage_net_wifi: %{
-        networks: [
-          %{
-            key_mgmt: :wpa_psk,
-            ssid: System.get_env("NERVES_WIFI_SSID"),
-            psk: System.get_env("NERVES_WIFI_PSK")
-          }
-        ]
-      },
-      ipv4: %{method: :dhcp}
-    }}
+    {"wlan0",
+     %{
+       type: VintageNetWiFi,
+       vintage_net_wifi: %{
+         networks: [
+           %{
+             key_mgmt: :wpa_psk,
+             ssid: System.get_env("NERVES_WIFI_SSID"),
+             psk: System.get_env("NERVES_WIFI_PSK")
+           }
+         ]
+       },
+       ipv4: %{method: :dhcp}
+     }}
   ]
 
-config :mdns_lite,
+custom_hostname = String.downcase("bb-#{Mix.target()}")
+
+config(
+  :mdns_lite,
   # The `hosts` key specifies what hostnames mdns_lite advertises.  `:hostname`
   # advertises the device's hostname.local. For the official Nerves systems, this
   # is "nerves-<4 digit serial#>.local".  The `"nerves"` host causes mdns_lite
@@ -78,27 +82,42 @@ config :mdns_lite,
   # because otherwise any of the devices may respond to nerves.local leading to
   # unpredictable behavior.
 
-  hosts: [:hostname, "breadboard"],
+  hosts: [custom_hostname, :hostname],
   ttl: 120,
 
   # Advertise the following services over mDNS.
   services: [
     %{
+      id: :ssh_main,
+      name: "SSH on Default Host",
       protocol: "ssh",
       transport: "tcp",
       port: 22
     },
     %{
+      id: :ssh_alt,
+      # Required for discovery tools
+      name: "SSH on #{custom_hostname}",
+      protocol: "ssh",
+      transport: "tcp",
+      port: 22
+    },
+    %{
+      id: :sftp,
+      name: "SFTP File Transfer",
       protocol: "sftp-ssh",
       transport: "tcp",
       port: 22
     },
     %{
+      id: :epmd,
+      name: "Erlang Port Mapper Daemon",
       protocol: "epmd",
       transport: "tcp",
       port: 4369
     }
   ]
+)
 
 # Import target specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
